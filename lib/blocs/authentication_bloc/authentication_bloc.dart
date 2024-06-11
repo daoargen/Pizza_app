@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:ffi';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:user_repository/user_repository.dart';
 
 part 'authentication_event.dart';
@@ -15,12 +13,22 @@ class AuthenticationBloc
   late final StreamSubscription<MyUser?> _userSubsription;
 
   AuthenticationBloc({required this.userRepository})
-      : super(AuthenticationState.unknown()) {
+      : super(const AuthenticationState.unknown()) {
     _userSubsription = userRepository.user.listen((user) {
       add(AuthenticationUserChanged(user));
     });
-    on<AuthenticationEvent>((event, emit) {
-      // TODO: implement event handler
+    on<AuthenticationUserChanged>((event, emit) {
+      if (event.user != MyUser.empty) {
+        emit(AuthenticationState.authenticated(event.user!));
+      } else {
+        emit(const AuthenticationState.unauthenticated());
+      }
     });
+  }
+
+  @override
+  Future<void> close(){
+    _userSubsription.cancel();
+    return super.close();   
   }
 }
